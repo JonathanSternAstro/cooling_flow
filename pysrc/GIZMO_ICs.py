@@ -38,7 +38,7 @@ class ICs:
     outdir_base = '../GIZMO_ICs/'
     init_base_filename = outdir_base+'init.c_base'
     analytic_gravity_base_filename = outdir_base+'analytic_gravity.h_base'
-    fn_diskOnly = '../MakeDisk_wHalo_m11_lr/ICs/m11_no_halo_%d%s%s%s%s.ic'
+    fn_diskOnly = '../MakeDisk_wHalo_m11_lr/ICs/m11_no_halo_%d%s%s%s%s%s.ic'
     outdir_template = outdir_data + 'vc%d_Rs%d_Mdot%d_Rcirc%d%s_res%s'
 
     max_step = 0.1                    #lowest resolution of solution in ln(r)
@@ -50,8 +50,9 @@ class ICs:
     DiscHeight = 0.2*un.kpc
     Z_disk = 1
     
-    def __init__(self,vc=None,Rcirc=None,Rsonic=None,Z_CGM=None,smallGalaxy=False,resolution = 8e4*un.Msun,ics=None,fgas=None,m=0,Rvc=200*un.kpc,
-                 Rres2Rcool=2):
+    def __init__(self,vc=None,Rcirc=None,Rsonic=None,Z_CGM=None,smallGalaxy=False,
+                 resolution = 8e4*un.Msun,ics=None,fgas=None,m=0,Rvc=200*un.kpc,
+                 Mdisk=None,Rres2Rcool=2):
         if ics!=None: #copy constructor for changing only Rcirc
             self.vc = ics.vc
             self.Rcirc = ics.Rcirc
@@ -63,6 +64,7 @@ class ICs:
             self.smallGalaxy = ics.smallGalaxy
             self.resolution = ics.resolution
             self.fgas_str = ics.fgas_str
+            self.Mdisk = ics.Mdisk
             self.Rres2Rcool=ics.Rres2Rcool
         else:                       
             self.vc = vc
@@ -75,6 +77,7 @@ class ICs:
             self.resolution = resolution
             self.fgas_str = '_fgas' + ('%s'%fgas).replace('.','')
             self.Rres2Rcool = Rres2Rcool
+            self.Mdisk = Mdisk
                  
     def calc_CF_solution(self,tol=1e-6,pr=True):
         self.CF_solution = CF.shoot_from_sonic_point(self.potential,
@@ -97,11 +100,17 @@ class ICs:
         res_str = '%.1g'%self.resolution.value
         res_str = res_str[:2]+res_str[-1:]
         Rcirc_str = ('','_Rcirc%d'%self.Rcirc.value)[self.Rcirc.value!=10]
+        if self.Mdisk != None:
+            tmp = '%0.g'%self.Mdisk.value            
+            Mdisk_str = '_Mdisk' + ''.join(tmp.split('+'))
+        else:
+            Mdisk_str = ''
         return self.fn_diskOnly%(self.vc.value,
                                  ('','_small_galaxy')[self.smallGalaxy],
                                  '_res'+res_str,
                                  self.fgas_str,
-                                 Rcirc_str)
+                                 Rcirc_str,
+                                 Mdisk_str)
         
         
     def create_output_files(self):
