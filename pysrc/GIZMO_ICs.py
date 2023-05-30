@@ -102,7 +102,7 @@ class ICs:
         Rcirc_str = ('','_Rcirc%d'%self.Rcirc.value)[self.Rcirc.value!=10]
         if self.Mdisk != None:
             tmp = '%0.g'%self.Mdisk.value            
-            Mdisk_str = '_Mdisk' + ''.join(tmp.split('+'))
+            Mdisk_str = '_Mdisk1e%d'%float(tmp.split('+')[1])
         else:
             Mdisk_str = ''
         return self.fn_diskOnly%(self.vc.value,
