@@ -52,7 +52,7 @@ class ICs:
     
     def __init__(self,vc=None,Rcirc=None,Rsonic=None,Z_CGM=None,smallGalaxy=False,
                  resolution = 8e4*un.Msun,ics=None,fgas=None,m=0,Rvc=200*un.kpc,
-                 Mdisk=None,Rres2Rcool=2):
+                 Mdisk=None,Rres2Rcool=2,res_str=None):
         if ics!=None: #copy constructor for changing only Rcirc
             self.vc = ics.vc
             self.Rcirc = ics.Rcirc
@@ -64,6 +64,7 @@ class ICs:
             self.smallGalaxy = ics.smallGalaxy
             self.resolution = ics.resolution
             self.fgas_str = ics.fgas_str
+            self.res_str = ics.res_str
             self.Mdisk = ics.Mdisk
             self.Rres2Rcool=ics.Rres2Rcool
         else:                       
@@ -76,6 +77,7 @@ class ICs:
             self.smallGalaxy = smallGalaxy
             self.resolution = resolution
             self.fgas_str = '_fgas' + ('%s'%fgas).replace('.','')
+            self.res_str = res_str
             self.Rres2Rcool = Rres2Rcool
             self.Mdisk = Mdisk
                  
@@ -88,8 +90,11 @@ class ICs:
     def sample(self):
         return CF.sample(self.CF_solution,self.resolution.to('Msun'),self.Rcirc,self.DiscScale,self.DiscHeight,Rres2Rcool=self.Rres2Rcool)
     def outdirname(self):
-        res_str = '%.1g'%self.resolution.value
-        res_str = res_str[:2]+res_str[-1:]
+        if self.res_str==None:
+            res_str = '%.1g'%self.resolution.value
+            res_str = res_str[:2]+res_str[-1:]
+        else:
+            res_str = self.res_str
         return self.outdir_template%(self.vc.value,
                                     self.Rsonic.value,
                                     self.CF_solution.Mdot.value*1000,
@@ -97,8 +102,11 @@ class ICs:
                                     self.fgas_str,
                                     res_str)
     def makedisk_filename(self):
-        res_str = '%.1g'%self.resolution.value
-        res_str = res_str[:2]+res_str[-1:]
+        if self.res_str==None:
+            res_str = '%.1g'%self.resolution.value
+            res_str = res_str[:2]+res_str[-1:]
+        else:
+            res_str = self.res_str
         Rcirc_str = ('','_Rcirc%d'%self.Rcirc.value)[self.Rcirc.value!=10]
         if self.Mdisk != None:
             tmp = '%0.g'%self.Mdisk.value            
@@ -113,14 +121,15 @@ class ICs:
                                  Mdisk_str)
         
         
-    def create_output_files(self):
+    def create_output_files(self,makeDisk_filename=None):
         outdir = self.outdirname()
         if not os.path.exists(outdir): os.mkdir(outdir)
         print('files saved to: %s'%outdir)
-        self.create_ICs_hdf5_file(outdir+'/init_snapshot')
+        self.create_ICs_hdf5_file(outdir+'/init_snapshot',makeDisk_filename=makeDisk_filename)
         self.update_GIZMO_files(outdir+'/')
-    def create_ICs_hdf5_file(self,fn_out):                
-        makeDisk_filename = self.makedisk_filename()
+    def create_ICs_hdf5_file(self,fn_out,makeDisk_filename=None):
+        if makeDisk_filename==None:                
+            makeDisk_filename = self.makedisk_filename()
         print(makeDisk_filename)
         snap = gsr.Snapshot(makeDisk_filename)
         gas_masses, gas_coords, gas_vels, gas_internalEnergies = self.sample()
